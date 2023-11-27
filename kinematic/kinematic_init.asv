@@ -1,0 +1,5 @@
+% Vehicle parameters
+mass = 2164;    % Vehicle mass in kg
+inertia = 4373; % Inertia in kg*m^2
+l_f = 1.3384;   % Distance from the center of mass to front axle
+l_ 
