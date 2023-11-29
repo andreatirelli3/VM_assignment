@@ -24,6 +24,10 @@ ydot = v*sin(phi + beta);
 phi = ((v*cos(beta)) / (l_f + l_r))*(tan(C_f) + tan(C_r));
 beta = atan((l_f*tan(C_r) + l_r*tan(C_f)) / l_f + l_r);
 
+% Kinematic model
+x = [0 0 0]';       % State of the vehicle
+u = [v C_f C_r]';   % Input signal
+
 % Simulation loop
 while tsim_start <= tsim_end
 
