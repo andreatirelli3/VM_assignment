@@ -4,12 +4,12 @@ v = 30 * 1000 / 3600;   % Vehicle speed in m/s
 
 %  Signal parameters
 freq = 0.5;             % Frequency of sinusoidal steering input in Hz
-amp_steering = 10;      % Amplitude of sinusoidal steering input in rad
+amp_steering = 30;      % Amplitude of sinusoidal steering input in rad
 
 %  Time parameteres
-t = 0;          % Simulation time start
-t_end = 10;     % Simulation time end
-dt = 0.1;       % Simulation time step
+t = 0;     % Simulation time start
+tsim_end = 10;      % Simulation time end
+dtsim = 0.1;       % Simulation time step
 
 %% Vehicle parameteres
 %  Physical parameteres
@@ -53,20 +53,20 @@ global_c = [course'];
 %  slip = @(t) deg2rad(30 * sin(2 * pi * 0.5 * t)); ???
 slip = @(t) deg2rad(30*pi/180*sin(0.5*pi*2*t));
 %  Load the external function
-xdot = @xdot;
+bicycle_model = @xdot;
 
 %% Simulation
-while t <= t_end
+while tsim_start <= tsim_end
     % Update u with the give input signal of
     % steering angle
-    u = [v_x, slip(t), 0];
+    u = [v_x, slip(tsim_start), 0];
 
     % Update beta with the calculated steering
     % angle and calculate the slip angle
     beta = atan((l_f*tan(u(3))+l_r*tan(u(2)))/(l_f+l_r));
 
     % Kinematic model ODE's functions
-    [tsol, xsol] = ode45(@(t,x) xdot(t, x, u, beta, l_f, l_r), [t t+dt], x(:,end));
+    [tsol, xsol] = ode45(@(tsim_start,x) bicycle_model(x, u, beta, l_f, l_r), [tsim_start tsim_start+dtsim], x(:,end));
     x = [x xsol(end,:)'];
     
     global_u = [global_u u'];
@@ -77,14 +77,14 @@ while t <= t_end
     global_c = [global_c, course'];
     
     % Move to the next time step
-    t = t + dt; 
+    tsim_start = tsim_start + dtsim; 
 end
 
 %% Plot the result
 figure;
 
 subplot(3, 2, 1);
-plot(x(1,1:101),x(2,1:101), 'r-', 'LineWidth', 1.5);
+plot(x(:,1), x(:,2), 'r-', 'LineWidth', 1.5);
 title('Vehicle Position in the global frame');
 xlabel('X Position (m)');
 ylabel('Y Position (m)');
