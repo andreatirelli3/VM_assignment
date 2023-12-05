@@ -1,3 +1,5 @@
+clear all, close all, clc
+
 %% Simulation parameters
 %  Movement parameteres
 v = 30 * 1000 / 3600;   % Vehicle speed in m/s
@@ -51,7 +53,7 @@ global_c = [course'];
 %% Support anonymous fun
 %  Calculate the slip angle in relation of the time (t)
 %  slip = @(t) deg2rad(30 * sin(2 * pi * 0.5 * t)); ???
-slip = @(t) deg2rad(30*pi/180*sin(0.5*pi*2*t));
+slip = @(t) deg2rad(30*pi/180*sin(freq*pi*2*t));
 %  Load the external function
 xdot = @xdot;
 
