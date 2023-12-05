@@ -43,8 +43,8 @@ beta = 0;   % Steering angle, in rad
 course = 0; % Course angle, in rad
 
 % State vectors
-x = [X; Y; psi];     % Position state
-u = [v_x, s_f, s_r];    % Storage state
+x = [X; Y; psi];        % Position state
+u = [v_x, s_f, s_r];    % Input singals state
 %  * Other storage support struct
 global_u = [u(1)'; u(2)'; u(3)'];
 global_b = [beta'];
@@ -52,8 +52,8 @@ global_c = [course'];
 
 %% Support anonymous fun
 %  Calculate the slip angle in relation of the time (t)
-%  slip = @(t) deg2rad(30 * sin(2 * pi * 0.5 * t)); ???
-slip = @(t) deg2rad(30*pi/180*sin(freq*pi*2*t));
+slip = @(t) deg2rad(30 * sin(2 * pi * freq * t));
+% slip = @(t) deg2rad(30*pi/180*sin(freq*pi*2*t));
 %  Load the external function
 xdot = @xdot;
 
@@ -91,3 +91,4 @@ title('Vehicle Position in the global frame');
 xlabel('X Position (m)');
 ylabel('Y Position (m)');
 grid on;
+
