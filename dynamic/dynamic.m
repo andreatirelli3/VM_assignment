@@ -11,6 +11,8 @@ t = 0;          % Simulation time start
 t_end = 10;     % Simulation time end
 dt = 0.1;       % Simulation time step
 
+t_pos = 0;
+
 %% Vehicle parameteres
 %  Physical parameteres
 mass = 2164;        % Vehicle mass in kg
@@ -81,6 +83,7 @@ global_vs = 0;
 slip = @(t) deg2rad(30 * sin(2 * pi * freq * t));
 %  Load the external function
 xdot = @xdot;
+ypsi2pos = @ypsi2pos;
 
 %% Simulation
 while t<=t_end
@@ -88,7 +91,31 @@ while t<=t_end
     [tsol, xsol] = ode45(@(t,x) xdot(x, u, A, B), [t t+dt], x(:,end));
     x = [x xsol(end,:)'];
     
-    v_s = 
-    course_f = x(3, end) +
+    % Calculate the position in the global frame
+    [tsol_pos, xsol_pos] = ode45(@(t_pos,global_frame_pos) ypsi2pos(x, v_x), [t_pos t_pos+dt], global_frame_pos(:,end));
+    global_frame_pos = [global_frame_pos xsol_pos(end,:)'];
+    
+    v_s = x(2, end) / v_x;
+    course_f = x(3, end) + v_s;
+
+    slip_f = u - ((x(2,end) + l_f*x(4,end)) / v);
+    slip_r = -(x(2,end) + l_r*x(4,end)) / v;
+
+    % Update the store structs
+    global_u = [global_u u'];
+    global_vs = [global_vs v_s'];
+    global_c = [global_c course_f'];
+    global_sf = [global_sf slip_f'];
+    global_sr = [global_sr slip_r'];
+
+    t = t + dt;
 end
 
+figure
+
+subplot(3, 2, 1);
+plot(global_frame_pos(1,1:101),global_frame_pos(2,1:101), 'r-', 'LineWidth', 1.5);
+title('Vehicle position in the global frame');
+xlabel('x[m]');
+ylabel('y[m]');
+grid on;
