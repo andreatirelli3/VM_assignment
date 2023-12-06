@@ -1,6 +1,24 @@
+%% Load external path
+%  * Get the current working directory (dynamical model)
+root_folder = fileparts(fileparts(pwd));
+% disp(root_folder);
+model_folder = fileparts(pwd);
+% disp(model_folder);
+
+%  * Construct the new path
+model_utils_path = [model_folder, '/utils'];
+common_sym_path = [root_folder, '/common'];
+
+% disp(common_sym_path);
+% disp(model_utils_path);
+
+%  * Add the new path to the MATLAB search path
+addpath(common_sym_path);
+addpath(model_utils_path);
+
 %% Simulation parameters
 %  Movement parameteres
-v = 50 * 1000 / 3600;   % Vehicle speed in m/s
+v = 30 * 1000 / 3600;   % Vehicle speed in m/s
 
 %  Signal parameters
 freq = 0.5;             % Frequency of sinusoidal steering input in Hz
@@ -40,13 +58,13 @@ Apsi_dot_dot_2 = ((2*C_f*l_f - 2*C_r*l_r) / (i_x*v_x));
 Apsi_dot_dot_4 = ((2*C_f*(l_f^2) + 2*C_r*(l_r^2)) / (i_x*v_x));
 
 %  * Speed dependent vars in the matrix B
-By_dot_dot = 2*C_f / mass;        % We use only the coefficents and
-Bpsi_dot_dot = 2*l_f*C_f / mass;  % constants of Front tire because the
+By_dot_dot = 2*C_f / mass;          % We use only the coefficents and
+Bpsi_dot_dot = 2*l_f*C_f / i_x;     % constants of Front tire because the
                                     % the assumtion is Rear = 0 slip angle.
                                     % In more easy term, the vehicle is not
                                     % a 4x4.
 
-%  Dynamic model matrix A, B
+%  Dynamic lateral model matrix A, B
 A = [0 1 0 0;
     0 -Ay_dot_dot_2 0 -Ay_dot_dot_4;
     0 0 0 1;
@@ -84,19 +102,20 @@ slip = @(t) deg2rad(30 * sin(2 * pi * freq * t));
 %  Load the external function
 xdot = @xdot;
 ypsi2pos = @ypsi2pos;
+plotter = @plotter;
 
 %% Simulation
 while t<=t_end
     u = slip(t);
     [tsol, xsol] = ode45(@(t,x) xdot(x, u, A, B), [t t+dt], x(:,end));
     x = [x xsol(end,:)'];
-    
+
     % Calculate the position in the global frame
-    [tsol_pos, xsol_pos] = ode45(@(t_pos,global_frame_pos) ypsi2pos(x, v_x), [t_pos t_pos+dt], global_frame_pos(:,end));
+    [tsol_pos, xsol_pos] = ode45(@(t,global_frame_pos) ypsi2pos(x, v_x), [t_pos t_pos+dt], global_frame_pos(:,end));
     global_frame_pos = [global_frame_pos xsol_pos(end,:)'];
     
     v_s = x(2, end) / v_x;
-    course_f = x(3, end) + v_s;
+    course_f = v_s + x(3, end);
 
     slip_f = u - ((x(2,end) + l_f*x(4,end)) / v);
     slip_r = -(x(2,end) + l_r*x(4,end)) / v;
@@ -111,11 +130,14 @@ while t<=t_end
     t = t + dt;
 end
 
-figure
+t_plot = 0:dt:t_end;
+plotter(t_plot, x, global_frame_pos, global_u);
 
-subplot(1, 1, 1);
-plot(global_frame_pos(1,1:101),global_frame_pos(2,1:101), 'r-', 'LineWidth', 1.5);
-title('Vehicle position in the global frame');
-xlabel('x[m]');
-ylabel('y[m]');
-grid on;
+% figure
+
+% subplot(3, 1, 1);
+% plot(global_frame_pos(1,1:101),global_frame_pos(2,1:101), 'r-', 'LineWidth', 1.5);
+% title('Vehicle position in the global frame');
+% xlabel('x[m]');
+% ylabel('y[m]');
+% grid on;
