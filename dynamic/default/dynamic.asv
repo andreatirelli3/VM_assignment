@@ -130,11 +130,11 @@ end
 t_plot = 0:dt:t_end+dt;
 
 %  Transfer sim datas into vars to send at the plotter
-position = global_frame_pos;        % Global position
-vehicle_heading = x(3, :);          % Vehicle heading
-slip_angle = global_vs;             % Slip angle
-course_angle = global_c;            % Course angle
-steering_angle = global_u(1, :);    % Steering angle (front)
+position = global_frame_pos; % Global position
+vehicle_heading = x(3, :); % Vehicle heading
+slip_angle = global_vs; % Slip angle
+course_angle = global_c; % Course angle
+% Steering angle (front)
 
 %  Plot
-plotter(t_plot, x, position, vehicle_heading, slip_angle, course_angle, steering_angle);
+plotter(t_plot, x, position, vehicle_heading, slip_angle, [], []);
