@@ -86,7 +86,7 @@ while t <= t_end
 
     % Update the course angle
     course = beta+x(3, end);
-    global_c = [global_c, course];
+    global_c = [global_c, course'];
     
     % Move to the next time step
     t = t + dt; 
@@ -94,14 +94,23 @@ end
 
 %% Plot the result
 %  Re-fetch the time simulation
-t_plot = 0:dt:t_end+dt;
+t_plot = 0:dt:t_end;
 
 %  Transfer sim datas into vars to send at the plotter
-position = x(1:2, :);               % Global position
-vehicle_heading = x(3, :);          % Vehicle heading
-slip_angle = global_b;              % Slip angle
-course_angle = global_c;            % Course angle
-steering_angle = global_u(2, :);    % Steering angle (front)
+position = x(1:2, :);   % Global position
+v
 
 %  Plot
-plotter(t_plot, x, position, vehicle_heading, slip_angle, course_angle, steering_angle);
+plotter(t_plot, x, position);
+
+
+
+% figure;
+
+% subplot(3, 2, 1);
+% plot(x(1,1:101),x(2,1:101), 'r-', 'LineWidth', 1.5);
+% title('Vehicle Position in the global frame');
+% xlabel('X Position (m)');
+% ylabel('Y Position (m)');
+% grid on;
+

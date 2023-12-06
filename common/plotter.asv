@@ -50,7 +50,7 @@ if ~isempty(steering_angle)
     plot(t, rad2deg(steering_angle(1,1:end)), 'k-', 'LineWidth', 1.5);
     title('Steering angle');
     xlabel('Time (s)');
-    ylabel('Steering angle (°)');
+    ylabel('Course angle (°)');
     grid on;
     index_p = index_p+1;
 end

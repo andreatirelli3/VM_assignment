@@ -1,16 +1,11 @@
 %% Load external path
-%  * Get the current working directory (dynamical model)
 root_folder = fileparts(fileparts(pwd));
-% disp(root_folder);
+%  * Get the current working directory (dynamical model)
 model_folder = fileparts(pwd);
-% disp(model_folder);
 
 %  * Construct the new path
 model_utils_path = [model_folder, '/utils'];
 common_sym_path = [root_folder, '/common'];
-
-% disp(common_sym_path);
-% disp(model_utils_path);
 
 %  * Add the new path to the MATLAB search path
 addpath(common_sym_path);
@@ -130,14 +125,16 @@ while t<=t_end
     t = t + dt;
 end
 
-t_plot = 0:dt:t_end;
-plotter(t_plot, x, global_frame_pos, global_u);
+%% Plot the result
+%  Re-fetch the time simulation
+t_plot = 0:dt:t_end+dt;
 
-% figure
+%  Transfer sim datas into vars to send at the plotter
+% Global position
+% Vehicle heading
+% Slip angle
+% Course angle
+% Steering angle (front)
 
-% subplot(3, 1, 1);
-% plot(global_frame_pos(1,1:101),global_frame_pos(2,1:101), 'r-', 'LineWidth', 1.5);
-% title('Vehicle position in the global frame');
-% xlabel('x[m]');
-% ylabel('y[m]');
-% grid on;
+%  Plot
+plotter(t_plot, x, [], []);
