@@ -1,6 +1,6 @@
 %% Simulation parameters
 %  Movement parameteres
-v = 30 * 1000 / 3600;   % Vehicle speed in m/s
+v = 50 * 1000 / 3600;   % Vehicle speed in m/s
 
 %  Signal parameters
 freq = 0.5;             % Frequency of sinusoidal steering input in Hz
@@ -33,24 +33,24 @@ v_x = v;
 i_x = inertia;
 
 %  * Speed dependent vars in the matrix A
-Ay_dot_dot_2 = -((2*C_f + 2*C_r) / (mass*v_x));
-Ay_dot_dot_4 = -v_x - ((2*C_f*l_f - 2*C_r*l_r) / (mass*v_x));
+Ay_dot_dot_2 = ((2*C_f + 2*C_r) / (mass*v_x));
+Ay_dot_dot_4 = v_x - ((2*C_f*l_f - 2*C_r*l_r) / (mass*v_x));
 
-Apsi_dot_dot_2 = -((2*C_f*l_f - 2*C_r*l_r) / (i_x*v_x));
-Apsi_dot_dot_4 = -((2*C_f*(l_f^2) + 2*C_r*(l_r^2)) / (i_x*v_x));
+Apsi_dot_dot_2 = ((2*C_f*l_f - 2*C_r*l_r) / (i_x*v_x));
+Apsi_dot_dot_4 = ((2*C_f*(l_f^2) + 2*C_r*(l_r^2)) / (i_x*v_x));
 
 %  * Speed dependent vars in the matrix B
-By_dot_dot = (2*C_f) / mass;        % We use only the coefficents and
-Bpsi_dot_dot = (2*l_f*C_f) / mass;  % constants of Front tire because the
+By_dot_dot = 2*C_f / mass;        % We use only the coefficents and
+Bpsi_dot_dot = 2*l_f*C_f / mass;  % constants of Front tire because the
                                     % the assumtion is Rear = 0 slip angle.
                                     % In more easy term, the vehicle is not
                                     % a 4x4.
 
 %  Dynamic model matrix A, B
 A = [0 1 0 0;
-    0 Ay_dot_dot_2 0 Ay_dot_dot_4;
+    0 -Ay_dot_dot_2 0 -Ay_dot_dot_4;
     0 0 0 1;
-    0 Apsi_dot_dot_2 0 Apsi_dot_dot_4];
+    0 -Apsi_dot_dot_2 0 -Apsi_dot_dot_4];
 
 B = [0; By_dot_dot; 0; Bpsi_dot_dot];
 
@@ -113,7 +113,7 @@ end
 
 figure
 
-subplot(3, 2, 1);
+subplot(1, 1, 1);
 plot(global_frame_pos(1,1:101),global_frame_pos(2,1:101), 'r-', 'LineWidth', 1.5);
 title('Vehicle position in the global frame');
 xlabel('x[m]');
