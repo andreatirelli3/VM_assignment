@@ -1,14 +1,15 @@
 %% Load external path
-%  * Get the current working directory
-root_folder = fileparts(pwd);
-disp(root_folder);
+root_folder = fileparts(fileparts(pwd));
+%  * Get the current working directory (dynamical model)
+model_folder = fileparts(pwd);
 
 %  * Construct the new path
-new_path = [root_folder, '/utils'];
-disp(new_path);
+model_utils_path = [model_folder, '/utils'];
+common_sym_path = [root_folder, '/common'];
 
 %  * Add the new path to the MATLAB search path
-addpath(new_path);
+addpath(common_sym_path);
+addpath(model_utils_path);
 
 %% Simulation parameters
 %  Movement parameteres
@@ -44,6 +45,8 @@ C_r = 1.9032e5;     % Rear cornering stiffness coefficient
 v_x = v;
 i_z = inertia;
 
+R = 30;     % Path
+
 %  * Speed dependent vars (erros => e_n) in the matrix A
 e_1_dot_2 = (2*C_f + 2*C_r) / (mass*v_x);
 e_1_dot_3 = (2*C_f + 2*C_r) / mass;
@@ -71,12 +74,82 @@ B = [0; delta_2; 0; delta_4];
 
 d = [0; psides_dot_2; 0; -psides_dot_4];
 
+%  State vectors
+%  * Support vars
+e1 = 0;
+e1_dot = 0;
+e2 = 0;
+e2_dot = 0;
+delta = 0;
+
+%  * States vectors
+x = [e1; e1_dot; e2; e2_dot];       % Lateral position state (error of desired path)
+u = delta;                          % Input singal state (steering angle)
+
+%  * Position in the global fram
+X = 0;                              % Coordinate X in the global frame
+Y = 0;                              % Coordinate Y in the global frame
+pos = [X; Y];
+desired_pos = [X; Y];               % Desire position (X,Y)
+global_frame_pos = [X; Y];          % Global frame position (X,Y)
+
+%  * Other storage support struct
+global_u = u;
+
 %% Support anonymous fun
 %  Calculate the slip angle in relation of the time (t)
 slip = @(t) deg2rad(30 * sin(2 * pi * freq * t));
-% TODO: xdot
-% TODO: e1e2pos
+xdot = @xdot_ra;
+intpsi2pos = @intpsi2pos;
+
+%% Symbolic computation of trajectory
+syms i real;
+v_x = sym('v_x', 'real');
+R = sym('R', 'real');
+dt = sym('dt', 'real');
+
+[psi_des_dot_sym, psi_des_sym, x_des_sym, y_des_sym] = intpsi2pos(i, v_x, R);
+psi_des_dot_sym_numeric = matlabFunction(psi_des_dot_sym);
+psi_des_sym_numeric = matlabFunction(psi_des_sym);
+x_des_sym_numeric = matlabFunction(x_des_sym);
+y_des_sym_numeric = matlabFunction(y_des_sym);
 
 %% Simulation
 while t<=t_end
+    u = slip(t);
+
+    % Numerical evaluation of symbolic expressions
+    psi_des_dot = psi_des_dot_sym_numeric(t, v_x, R);
+    psi_des = psi_des_sym_numeric(t, v_x, R);
+    x_des = x_des_sym_numeric(t, v_x, R);
+    y_des = y_des_sym_numeric(t, v_x, R);
+
+    [tsol, xsol] = ode45(@(t,x) xdot(x, u, A, B, d, psi_des_dot), [t t+dt], x(:,end));
+    x = [x xsol(end,:)'];  
+
+    pos_des = [x_des y_des];
+    desired_pos = [desired_pos pos_des'];
+
+    psi = x(3, end) + psi_des;
+    global_x = x_des - x(1,end)*sin(psi);
+    global_y = y_des + x(1,end)*cos(psi);
+    global_pos = [x_des y_des];
+    global_frame_pos = [global_frame_pos global_pos']; 
+
+    global_u = [global_u u'];
+    
+    % Continua domani
+
+    t = t + dt;
 end
+
+%% Plot the result
+%  Re-fetch the time simulation
+t_plot = 0:dt:t_end+dt;
+
+%  Transfer sim datas into vars to send at the plotter
+position = global_frame_pos;        % Global position
+steering_angle = global_u(1, :);    % Steering angle
+
+%  Plot
+plotter(t_plot, x, position, [], [], [], steering_angle);
