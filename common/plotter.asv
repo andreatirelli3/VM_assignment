@@ -1,13 +1,15 @@
 function plotter(t, x, position, vehicle_heading, slip_angle, course_angle, steering_angle, desired_pos)
 figure;
 
+
+
 %% Global frame position
 subplot(3,2,[1,2]);
-if ~isempty(desired_pos)
-    plot(desired_pos(1,1:end),desired_pos(2,1:end), 'g-', 'LineWidth', 1.5);
-    hold on;
+%if ~isempty(desired_pos)
+    %plot(desired_pos(1:1,end),desired_pos(2:1,end), 'g-', 'LineWidth', 1.5);
+    %hold on;
 end
-plot(desired_pos(1,1:end),desired_pos(2,1:end), 'g-', 'LineWidth', 1.5);
+plot(desired_pos(1:1,end),desired_pos(2:1,end), 'g-', 'LineWidth', 1.5);
 hold on;
 plot(position(1,1:end),position(2,1:end), 'r-', 'LineWidth', 1.5)
 title('Vehicle position in the global frame');
@@ -60,19 +62,4 @@ if ~isempty(steering_angle)
     grid on;
     index_p = index_p+1;
 end
-
-%% Show better position (and desired position)
-figure;
-
-if ~isempty(desired_pos)
-    plot(desired_pos(1,1:end),desired_pos(2,1:end), 'g-', 'LineWidth', 1.5);
-    hold on;
-end
-plot(desired_pos(1,1:end),desired_pos(2,1:end), 'g-', 'LineWidth', 1.5);
-hold on;
-plot(position(1,1:end),position(2,1:end), 'r-', 'LineWidth', 1.5)
-title('Vehicle position in the global frame');
-xlabel('Position X (m)');
-ylabel('Position Y (m)');
-grid on;
 end

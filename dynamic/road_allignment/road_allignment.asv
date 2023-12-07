@@ -100,10 +100,12 @@ global_u = u;
 %  Calculate the slip angle in relation of the time (t)
 slip = @(t) deg2rad(30 * sin(2 * pi * freq * t));
 xdot_ra = @xdot_ra;
+% lateral_model_road = @lateral_model_road;
 % intpsi2pos = @intpsi2pos; % Not working atm
 
 %% Integral section
 psi_des_dot = v_x/R;
+% syms psi_des_dot(i) psi_des(i) x_des(i) y_des(i)
 syms psi_des(i) x_des(i) y_des(i)
 
 % psi_des_dot(i) = v_x / R;                     % Calculate psi_des_dot
@@ -111,12 +113,18 @@ psi_des(i) = int(psi_des_dot, 0, i);            % Integrate psi_des_dot to get p
 x_des(i) = int(v_x * cos(psi_des(i)), 0, i);    % Integrate v*cos(psi_des) to get x_des
 y_des(i) = int(v_x * sin(psi_des(i)), 0, i);    % Integrate v*sin(psi_des) to get y_des
 
+%% System reachability
+if size(A,4) == rank(ctrb(A,B))
+    disp('The system is reachable');
+end 
+
 %% Simulation
 while t<=t_end
     % Update u with the give input signal of steering angle
     u = slip(t);
 
     % Integrate psi_des_dot, psi_des, x_des, y_des
+    % psi_des_dot_T = double(psi_des_dot(t));
     psi_des_T = psi_des(t);
     x_des_T = x_des(t);
     y_des_T = y_des(t);
@@ -124,6 +132,7 @@ while t<=t_end
     d = psi_des_dot;
 
     [tsol, xsol] = ode45(@(t,x) xdot_ra(x, u, A, B, B_d, d), [t t+dt], x(:,end));
+    % [tsol, xsol] = ode45(@(t,x) lateral_model_road(x,u,C_f,C_r,l_f,l_r,inertia,v_x, mass,d), [t t+dt], x(:,end));
     x = [x xsol(end,:)'];  
 
     pos_des = [x_des_T y_des_T];
@@ -151,4 +160,21 @@ position = global_frame_pos;        % Global position
 steering_angle = global_u(1, :);    % Steering angle
 
 %  Plot
-plotter(t_plot, x, position, [], [], [], steering_angle, desired_pos);
+% plotter(t_plot, x, position, [], [], [], steering_angle, desired_pos);
+figure;
+
+
+
+%% Global frame position
+subplot(3,2,[1,2]);
+%if ~isempty(desired_pos)
+    %plot(desired_pos(1:1,end),desired_pos(2:1,end), 'g-', 'LineWidth', 1.5);
+    %hold on;
+%end
+plot(desired_pos(1,1:end),desired_pos(2:1,end), 'g-', 'LineWidth', 1.5);
+% hold on;
+% plot(position(1,1:end),position(2,1:end), 'r-', 'LineWidth', 1.5)
+title('Vehicle position in the global frame');
+xlabel('Position X (m)');
+ylabel('Position Y (m)');
+grid on;
