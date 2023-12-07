@@ -14,6 +14,10 @@ xlabel('Position X (m)');
 ylabel('Position Y (m)');
 grid on;
 
+if ~isempty(desired_pos)
+    legend('Desired path', 'Position in the global frame');
+end
+
 index_p = 3;
 
 %% Vehicle heading
@@ -73,4 +77,8 @@ title('Vehicle position in the global frame');
 xlabel('Position X (m)');
 ylabel('Position Y (m)');
 grid on;
+
+if ~isempty(desired_pos)
+    legend('Desired path', 'Position in the global frame');
+end
 end

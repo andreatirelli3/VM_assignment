@@ -13,11 +13,11 @@ addpath(model_utils_path);
 
 %% Simulation parameters
 %  Movement parameteres
-v = 30 * 1000 / 3600;   % Vehicle speed in m/s
+v = 50 * 1000 / 3600;   % Vehicle speed in m/s
 
 %  Signal parameters
 freq = 0.5;             % Frequency of sinusoidal steering input in Hz
-amp_steering = 10;      % Amplitude of sinusoidal steering input in rad
+amp_steering = 30;      % Amplitude of sinusoidal steering input in rad
 
 %  Time parameteres
 t = 0;          % Simulation time start

@@ -17,7 +17,7 @@ v = 30 * 1000 / 3600;   % Vehicle speed in m/s
 
 %  Signal parameters
 freq = 0.5;             % Frequency of sinusoidal steering input in Hz
-amp_steering = 10;      % Amplitude of sinusoidal steering input in rad
+amp_steering = 30;      % Amplitude of sinusoidal steering input in rad
 
 %  Time parameteres
 t = 0;          % Simulation time start
@@ -45,7 +45,7 @@ C_r = 1.9032e5;     % Rear cornering stiffness coefficient
 v_x = v;
 i_z = inertia;
 
-R = 100;     % Path
+R = 9999999999;     % Path
 
 %  * Speed dependent vars (erros => e_n) in the matrix A
 e_1_dot_2 = (2*C_f + 2*C_r) / (mass*v_x);
