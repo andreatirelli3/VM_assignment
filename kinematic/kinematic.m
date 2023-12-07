@@ -86,7 +86,7 @@ while t <= t_end
 
     % Update the course angle
     course = beta+x(3, end);
-    global_c = [global_c, course];
+    global_c = [global_c, course'];
     
     % Move to the next time step
     t = t + dt; 
@@ -104,4 +104,4 @@ course_angle = global_c;            % Course angle
 steering_angle = global_u(2, :);    % Steering angle (front)
 
 %  Plot
-plotter(t_plot, x, position, vehicle_heading, slip_angle, course_angle, steering_angle);
+plotter(t_plot, x, position, vehicle_heading, slip_angle, course_angle, steering_angle, []);

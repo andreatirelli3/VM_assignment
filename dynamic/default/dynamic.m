@@ -137,4 +137,4 @@ course_angle = global_c;            % Course angle
 steering_angle = global_u(1, :);    % Steering angle (front)
 
 %  Plot
-plotter(t_plot, x, position, vehicle_heading, slip_angle, course_angle, steering_angle);
+plotter(t_plot, x, position, vehicle_heading, slip_angle, course_angle, steering_angle, []);

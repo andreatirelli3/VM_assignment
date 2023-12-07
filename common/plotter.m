@@ -7,7 +7,6 @@ if ~isempty(desired_pos)
     plot(desired_pos(1,1:end),desired_pos(2,1:end), 'g-', 'LineWidth', 1.5);
     hold on;
 end
-plot(desired_pos(1,1:end),desired_pos(2,1:end), 'g-', 'LineWidth', 1.5);
 hold on;
 plot(position(1,1:end),position(2,1:end), 'r-', 'LineWidth', 1.5)
 title('Vehicle position in the global frame');
@@ -20,7 +19,7 @@ index_p = 3;
 %% Vehicle heading
 if ~isempty(vehicle_heading)
     subplot(3,2,index_p);
-    plot(t, rad2deg(vehicle_heading(1,1:end)), 'g-', 'LineWidth', 1.5);
+    plot(t, rad2deg(vehicle_heading(1,1:end)), 'm-', 'LineWidth', 1.5);
     title('Vehicle heading');
     xlabel('Time (s)');
     ylabel('Vehicle heading (°)');
@@ -68,9 +67,8 @@ if ~isempty(desired_pos)
     plot(desired_pos(1,1:end),desired_pos(2,1:end), 'g-', 'LineWidth', 1.5);
     hold on;
 end
-plot(desired_pos(1,1:end),desired_pos(2,1:end), 'g-', 'LineWidth', 1.5);
 hold on;
-plot(position(1,1:end),position(2,1:end), 'r-', 'LineWidth', 1.5)
+plot(position(1,1:end),position(2,1:end), 'r-', 'LineWidth', 1.5);
 title('Vehicle position in the global frame');
 xlabel('Position X (m)');
 ylabel('Position Y (m)');

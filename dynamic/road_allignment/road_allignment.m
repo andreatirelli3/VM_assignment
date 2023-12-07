@@ -94,13 +94,15 @@ desired_pos = [X; Y];               % Desire position (X,Y)
 global_frame_pos = [X; Y];          % Global frame position (X,Y)
 
 %  * Other storage support struct
-global_u = u;
+global_h = 0;       % Vehicle heading
+global_u = u;       % Steering angle
+global_s = 0;       % Slip angle
+global_c = 0;       % Course angle
 
 %% Support anonymous fun
 %  Calculate the slip angle in relation of the time (t)
 slip = @(t) deg2rad(30 * sin(2 * pi * freq * t));
 xdot_ra = @xdot_ra;
-% intpsi2pos = @intpsi2pos; % Not working atm
 
 %% Integral section
 psi_des_dot = v_x/R;
@@ -125,19 +127,32 @@ while t<=t_end
 
     [tsol, xsol] = ode45(@(t,x) xdot_ra(x, u, A, B, B_d, d), [t t+dt], x(:,end));
     x = [x xsol(end,:)'];  
-
+    
+    % Update the desired position
     pos_des = [x_des_T y_des_T];
     desired_pos = [desired_pos pos_des'];
 
-    psi = x(3, end) + psi_des_T;
+    % Update the global position
     global_x = x_des_T - x(1,end)*sin(psi_des_T);
     global_y = y_des_T + x(1,end)*cos(psi_des_T);
     global_pos = [global_x global_y];
-    global_frame_pos = [global_frame_pos global_pos']; 
 
+    global_frame_pos = [global_frame_pos global_pos'];
+
+    % Update the vehicle heading
+    psi = x(3, end) + psi_des_T;
+    global_h = [global_h psi'];
+
+    % Update the slip angle
+    vehicle_slip = (1/v_x)*x(2, end) - x(3, end);
+    global_s = [global_s vehicle_slip'];
+
+    % Update the course angle
+    course = psi + vehicle_slip;
+    global_c = [global_c course'];
+
+    % Update steering angle
     global_u = [global_u u'];
-    
-    % Continua domani
 
     t = t + dt;
 end
@@ -148,7 +163,10 @@ t_plot = 0:dt:t_end+dt;
 
 %  Transfer sim datas into vars to send at the plotter
 position = global_frame_pos;        % Global position
+vehicle_heading = global_h;         % Vehicle heading
+slip_angle = global_s;              % Slip angle
+course_angle = global_c;            % Course angle
 steering_angle = global_u(1, :);    % Steering angle
 
 %  Plot
-plotter(t_plot, x, position, [], [], [], steering_angle, desired_pos);
+plotter(t_plot, x, position, vehicle_heading, slip_angle, course_angle, steering_angle, desired_pos);
