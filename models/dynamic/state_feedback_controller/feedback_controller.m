@@ -1,4 +1,4 @@
-%% Load external path
+% Load external path
 root_folder = fileparts(fileparts(pwd));
 %  * Get the current working directory (dynamical model)
 model_folder = fileparts(pwd);
@@ -11,9 +11,9 @@ common_sym_path = [root_folder, '/common'];
 addpath(common_sym_path);
 addpath(model_utils_path);
 
-%% Simulation parameters
+% Simulation parameters
 %  Movement parameteres
-v = 30 * 1000 / 3600;   % Vehicle speed in m/s
+v = 70 * 1000 / 3600;   % Vehicle speed in m/s
 
 %  Signal parameters
 freq = 0.5;             % Frequency of sinusoidal steering input in Hz
@@ -74,20 +74,54 @@ B = [0; delta_2; 0; delta_4];
 
 B_d = [0; psides_dot_2; 0; -psides_dot_4];
 
-n = size(A,2);      % number of states
-p = size(B_d,1);    % number of measured outputs
-m = size(B,2);      % number of inputs
-
 %  Rank of the reachability matrix
 r = rank(ctrb(A,B));
 
 %  Check the reachability of the system
-if r ~= n
+if r ~= size(A)
     error('The system is not reachable. Terminating.');
 end
 
 disp('The system is reachable.')
 
+%% Test pole placement
+Ts = 10; % Streering time
+maxOvershoot = 30;
+delta = .4;
+S = 100 * exp ((-pi*delta)/sqrt(1-delta^2));
+% controllo di S se è < maxOvershoot
+omega_n = 3/(delta*Ts);
+
+sigma = delta*1i*omega_n;
+disp(sigma);
+% Manca l'aggiunta della parte immaginaria a sigma
+p = [sigma, -sigma, -40, -100];
+% disp(p);
+K = place(A,B,p);
+
+Kr = K;
+
+% Matrice CL
+A_CL = A-B*K;
+E_CL = eig(A_CL, 'vector');
+B_CL = B*Kr;
+
+disp(K);
+
+% Stato iniziale, con errore di 2m
+xe = [-2; 0; 0; 0];
+
+
+% Compute the eigenvalues
+% [V,D, W] = eig(A);
+
+% Display the eigenvalues
+% disp('Eigenvalues of the system:');
+% disp(V);
+% disp(D);
+% disp(W);
+
+%% Continue road allignment
 %  State vectors
 %  * Support vars
 e1 = 0;
@@ -97,7 +131,7 @@ e2_dot = 0;
 delta = 0;
 
 %  * States vectors
-x = [e1; e1_dot; e2; e2_dot];       % Lateral position state (error of desired path)
+% x = [e1; e1_dot; e2; e2_dot];       % Lateral position state (error of desired path)
 u = delta;                          % Input singal state (steering angle)
 
 %  * Position in the global fram
@@ -116,16 +150,17 @@ global_c = 0;       % Course angle
 %% Support anonymous fun
 %  Calculate the slip angle in relation of the time (t)
 slip = @(t) deg2rad(30 * sin(2 * pi * freq * t));
-xdot_ra = @xdot_ra;
+xdot_pp = @xdot_pp;
 
 %% Integral section
-psi_des_dot = v_x/R;
-syms psi_des(i) x_des(i) y_des(i)
+% psi_des_dot = v_x/R;
+psi_des_dot = 0;
+syms psi_des(ti) x_des(ti) y_des(ti)
 
 % psi_des_dot(i) = v_x / R;                     % Calculate psi_des_dot
-psi_des(i) = int(psi_des_dot, 0, i);            % Integrate psi_des_dot to get psi_des
-x_des(i) = int(v_x * cos(psi_des(i)), 0, i);    % Integrate v*cos(psi_des) to get x_des
-y_des(i) = int(v_x * sin(psi_des(i)), 0, i);    % Integrate v*sin(psi_des) to get y_des
+psi_des(ti) = int(psi_des_dot, 0, ti);            % Integrate psi_des_dot to get psi_des
+x_des(ti) = int(v_x * cos(psi_des(ti)), 0, ti);    % Integrate v*cos(psi_des) to get x_des
+y_des(ti) = int(v_x * sin(psi_des(ti)), 0, ti);    % Integrate v*sin(psi_des) to get y_des
 
 %% Simulation
 while t<=t_end
@@ -139,26 +174,26 @@ while t<=t_end
 
     d = psi_des_dot;
 
-    [tsol, xsol] = ode45(@(t,x) xdot_ra(x, u, A, B, B_d, d), [t t+dt], x(:,end));
-    x = [x xsol(end,:)'];  
+    [tsol, xsol] = ode45(@(t,xe) xdot_pp(xe, A, B, K, B_d, d), [t t+dt], xe(:,end));
+    xe = [xe xsol(end,:)'];  
     
     % Update the desired position
     pos_des = [x_des_T y_des_T];
     desired_pos = [desired_pos pos_des'];
 
     % Update the global position
-    global_x = x_des_T - x(1,end)*sin(psi_des_T);
-    global_y = y_des_T + x(1,end)*cos(psi_des_T);
+    global_x = x_des_T - xe(1,end)*sin(psi_des_T);
+    global_y = y_des_T + xe(1,end)*cos(psi_des_T);
     global_pos = [global_x global_y];
 
     global_frame_pos = [global_frame_pos global_pos'];
 
     % Update the vehicle heading
-    psi = x(3, end) + psi_des_T;
+    psi = xe(3, end) + psi_des_T;
     global_h = [global_h psi'];
 
     % Update the slip angle
-    vehicle_slip = (1/v_x)*x(2, end) - x(3, end);
+    vehicle_slip = (1/v_x)*xe(2, end) - xe(3, end);
     global_s = [global_s vehicle_slip'];
 
     % Update the course angle
