@@ -74,9 +74,9 @@ while t <= t_end
     y = step_response(t, w_n, delta);
 
     % Update storages
+    x_posg = x_des_t - x(1,end)*sin(psi_des_t); % X global position
+    y_posg = y_des_t + x(1,end)*cos(psi_des_t); % Y global position
     heading_t = x(3, end) + psi_des_t;          % PSI
-    x_posg = x_des_t - x(1,end)*sin(heading_t); % X global position
-    y_posg = y_des_t + x(1,end)*cos(heading_t); % Y global position
     slip_t = (1/v_x)*x(2, end) - x(3, end);     % Slip angle
     course_t = heading_t + slip_t;              % Course angle
     u = steering_angle_u(t, freq);              % Steering angle
@@ -94,7 +94,7 @@ while t <= t_end
 
     % Change the path after 10s of the simulation
     if t >= 10
-        % R = 1000;   % Along a circle
+        R = 1000;   % Along a circle
     end 
 end
 
@@ -102,8 +102,4 @@ end
 plotter(t_plot, x, pos_global, heading, slip_angle, course_angle, steering_angle, pos_des);
 
 figure
-plot(t_plot, y_step_response, 'k-', 'LineWidth', 1.5);
-title('Step response');
-xlabel('Time (s)');
-ylabel('Step response (y(t))');
-grid on;
+plot(tsol, y_step_response,

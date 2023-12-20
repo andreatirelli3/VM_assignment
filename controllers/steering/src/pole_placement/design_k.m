@@ -8,8 +8,11 @@ if S >= overshoot_max
 end
 
 w_n = 3/(delta*Ts);                 % natural frequency
-dom_eig = delta*1i*w_n;             % dominant eigenvalue
-p = [dom_eig; -dom_eig; -40; -100]; % eigenvalues vector
+
+% Pole computation
+p1 = -delta*w_n + 1i*w_n*sqrt(1 - delta^2); % Dominant eigenvalue +
+p2 = -delta*w_n - 1i*w_n*sqrt(1 - delta^2); % Dominant eigenvalue -
+p = [p1; p2; -50; -100];                    % eigenvalues vector
 
 % Design K placing the eigenvalues in the space
 K = place(A,B,p);
