@@ -1,5 +1,5 @@
 function [K, delta, S, w_n] = design_k(Ts, overshoot_max, A, B)
-delta = .4;
+delta = .6;
 S = 100 * exp ((-pi*delta)/sqrt(1-delta^2));
 
 % Check the respect of the overshoot constraint

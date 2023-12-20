@@ -1,21 +1,30 @@
 clear all, close all, clc
 
 % Load external paths
-root_folder = fileparts(fileparts(pwd));                % project root directory
-controller_folder = fileparts(pwd);                     % controllers root directory
-common_sym_path = [root_folder, '/common'];             % common directory
-model_folder = [root_folder, '/models/src'];            % models directory
-road_aligned_folder = [model_folder, '/road_aligned'];  % road aligned directory
-pole_placement_folder = [pwd, '/src/pole_placement'];   % pole placement directory
+% project root directory
+root_folder = fileparts(fileparts(pwd));
+% controllers root directory
+controller_folder = fileparts(pwd);
+% common directory
+common_sym_path = [root_folder, '/common'];
+% models directory
+models_folder = [root_folder, '/models/src'];
+% road aligned directory
+road_aligned_folder = [models_folder, '/road_aligned'];
+% controllers source directory
+controllers_src_folder = [pwd, '/src'];
+% pole placement directory
+pole_placement_folder = [controllers_src_folder, '/pole_placement'];
 
 
 % Add the new path to the MATLAB search path
 addpath(common_sym_path);           % common directory
 addpath(road_aligned_folder);       % road aligned directory
+addpath(controllers_src_folder)     % controllers source directory
 addpath(pole_placement_folder);     % pole placement directory
 
 % Anonymous function
-pole_placement_xdot = @pole_placement_xdot;
+xdot = @xdot;
 
 % Vehicle geomtry
 [mass, i_z, l_f, l_r, C_f, C_r] = vehicle_geometry();
@@ -50,25 +59,25 @@ end
 x = [-2; 0; 0; 0];
 
 % Plot storage
-t_plot = 0:dt:t_end+dt;     % Simulation time
-pos_des = [0; 0];           % Desire position
-pos_global = [0; -2; 0];    % Global position
-heading = 0;                % Vehicle heading
-slip_angle = 0;             % Slip angle
-course_angle = 0;           % Course angle
-steering_angle = 0;         % Steering angle
+t_plot = 0:dt:t_end*2;     % Simulation time
+pos_des = [0; 0];                   % Desire position
+pos_global = [0; -2; 0];            % Global position
+heading = 0;                        % Vehicle heading
+slip_angle = 0;                     % Slip angle
+course_angle = 0;                   % Course angle
+steering_angle = 0;                 % Steering angle
 longitudinal_v = 70;        % Longitudinal velocity
 acceleration = 0;           % Acceleration
 commanded_accel = 0;        % Commanded accel
 y_step_response = 0;        % Step response
 
 % Simulation
-while t <= t_end
+while t <= t_end*2
     % Road Aligned integrator to calc d, psi_des(t), x_des(t) and y_des(t)
     [d, psi_des_t, x_des_t, y_des_t] = road_aligned_integrator(v_x, R, t);
     
     % ODE Lateral movement with controller K
-    [tsol, xsol] = ode45(@(t, x) pole_placement_xdot(x, A, B, K, B_d, d), [t t+dt], x(:,end));
+    [tsol, xsol] = ode45(@(t, x) xdot(x, A, B, K, B_d, d), [t t+dt], x(:,end));
     x = [x xsol(end,:)'];     % Update the state
     
     % Step response
@@ -94,8 +103,8 @@ while t <= t_end
     t = t + dt;
 
     % Change the path after 10s of the simulation
-    if t >= 10
-        % R = 1000;   % Along a circle
+    if t >= 10.0
+        R = 1000;   % Along a circle
     end 
 end
 
