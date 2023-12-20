@@ -39,7 +39,14 @@ end
 % Steering constraints
 [Ts, overshoot_max] = steering_constraints();
 
-% TODO: LQR
+% LQR
+[Q, R, K, S, CLP] = lq_regolator(A, B);
+
+disp("LQ regulator Gain");
+disp(K)
+
+disp("LQ regolator Poles");
+disp(CLP);
 
 % Initial state of the simulation
 x = [-2; 0; 0; 0];
