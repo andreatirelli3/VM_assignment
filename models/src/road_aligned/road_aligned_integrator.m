@@ -5,7 +5,6 @@ function [psi_des_dot, psi_des, x_des, y_des] = road_aligned_integrator(v_x, R, 
 
     % Symbolic variables
     syms psi_des_dot_sym(t) psi_des_sym(t) x_des_sym(t) y_des_sym(t)
-
     psi_des_dot_sym(t) = piecewise(t <= 10, 0, t>10, v_x/R);
 
     % Integrate psi_des_dot to get psi_des

@@ -61,7 +61,7 @@ disp(CLP);
 x = [-2; 0; 0; 0];
 
 % Plot storage
-t_plot = 0:dt:t_end+dt;     % Simulation time
+t_plot = 0:dt:t_end*2;      % Simulation time
 pos_des = [0; 0];           % Desire position
 pos_global = [0; -2; 0];    % Global position
 heading = 0;                % Vehicle heading
@@ -74,7 +74,7 @@ commanded_accel = 0;        % Commanded accel
 y_step_response = 0;        % Step response
 
 % Simulation
-while t <= t_end
+while t <= t_end*2
     % Road Aligned integrator to calc d, psi_des(t), x_des(t) and y_des(t)
     [d, psi_des_t, x_des_t, y_des_t] = road_aligned_integrator(v_x, R, t);
 
@@ -103,6 +103,11 @@ while t <= t_end
 
     % Move to the next instant (t)
     t = t + dt;
+
+    % Change the path after 10s of the simulation
+    if t >= 10.0
+        R = 1000;   % Along a circle
+    end 
 end
 
 %  Plot

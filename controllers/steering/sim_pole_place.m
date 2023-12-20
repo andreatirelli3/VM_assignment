@@ -59,13 +59,13 @@ end
 x = [-2; 0; 0; 0];
 
 % Plot storage
-t_plot = 0:dt:t_end*2;     % Simulation time
-pos_des = [0; 0];                   % Desire position
-pos_global = [0; -2; 0];            % Global position
-heading = 0;                        % Vehicle heading
-slip_angle = 0;                     % Slip angle
-course_angle = 0;                   % Course angle
-steering_angle = 0;                 % Steering angle
+t_plot = 0:dt:t_end*2;      % Simulation time
+pos_des = [0; 0];           % Desire position
+pos_global = [0; -2; 0];    % Global position
+heading = 0;                % Vehicle heading
+slip_angle = 0;             % Slip angle
+course_angle = 0;           % Course angle
+steering_angle = 0;         % Steering angle
 longitudinal_v = 70;        % Longitudinal velocity
 acceleration = 0;           % Acceleration
 commanded_accel = 0;        % Commanded accel
