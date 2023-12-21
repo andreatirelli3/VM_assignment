@@ -78,9 +78,14 @@ heading_err_2 = 0;
 while t <= t_end*2
     % Road Aligned integrator to calc d, psi_des(t), x_des(t) and y_des(t)
     [d, psi_des_t, x_des_t, y_des_t] = road_aligned_integrator(v_x, R, t);
-    
+
+    % Feed-forward
+    delta_ff = feedforward(mass, v_x, l_f, l_r, C_f, C_r, R, K);
+    % delt = (-K*x) + delta_ff;
+    % disp(delt);
+
     % ODE Lateral movement with controller K
-    [tsol, xsol] = ode45(@(t, x) xdot(x, A, B, K, B_d, d), [t t+dt], x(:,end));
+    [tsol, xsol] = ode45(@(t, x) xdot(x, A, B, K, B_d, d, delta_ff), [t t+dt], x(:,end));
     x = [x xsol(end,:)'];     % Update the state
     
     % Step response
@@ -92,7 +97,8 @@ while t <= t_end*2
     y_posg = y_des_t + x(1,end)*cos(heading_t); % Y global position
     slip_t = (1/v_x)*x(2, end) - x(3, end);     % Slip angle
     course_t = heading_t + slip_t;              % Course angle
-    u = steering_angle_u(t, freq);              % Steering angle
+    % u = steering_angle_u(t, freq);              % Steering angle
+    u = (-K*x(:,end)) + delta_ff;
 
     pos_des = [pos_des [x_des_t y_des_t]'];
     pos_global = [pos_global [x_posg y_posg heading_t]'];

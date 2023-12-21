@@ -1,4 +1,4 @@
-function [Q, R, K, S, CLP] = lq_regolator(A, B)
+function [Q, K, S, CLP] = lq_regolator(A, B)
     Q = 0.01;
     R = 10;
     N = 0;

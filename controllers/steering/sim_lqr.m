@@ -27,7 +27,7 @@ addpath(lqr_folder);                % LQR directory
 
 % Simulation envirorment
 [v_x, freq, amp_steering, t, t_end, dt] = gen_simulation();
-R = 1000;        % Path radius, start with inf and at t = 10 change to R = 1000
+R = inf;        % Path radius, start with inf and at t = 10 change to R = 1000
 e_start = -2;   % Simulation starting error, 2m
 
 % Road Allignment system matrices A, B, B_d
@@ -49,13 +49,13 @@ end
 [Ts, overshoot_max] = steering_constraints();
 
 % LQR
-[Q, R, K, S, CLP] = lq_regolator(A, B);
+[Q, K, S, CLP] = lq_regolator(A, B);
 
-disp("LQ regulator Gain");
-disp(K)
+% disp("LQ regulator Gain");
+% disp(K)
 
-disp("LQ regolator Poles");
-disp(CLP);
+% disp("LQ regolator Poles");
+% disp(CLP);
 
 % Initial state of the simulation
 x = [-2; 0; 0; 0];
@@ -73,13 +73,19 @@ acceleration = 0;           % Acceleration
 commanded_accel = 0;        % Commanded accel
 y_step_response = 0;        % Step response
 
+heading_err = 0;
+heading_err_2 = 0;
+
 % Simulation
 while t <= t_end*2
     % Road Aligned integrator to calc d, psi_des(t), x_des(t) and y_des(t)
     [d, psi_des_t, x_des_t, y_des_t] = road_aligned_integrator(v_x, R, t);
 
+    % Feed-forward
+    delta_ff = feedforward(mass, v_x, l_f, l_r, C_f, C_r, R, K);
+
     % ODE Lateral movement with controller K
-    [tsol, xsol] = ode45(@(t, x) xdot(x, A, B, K, B_d, d), [t t+dt], x(:,end));
+    [tsol, xsol] = ode45(@(t, x) xdot(x, A, B, K, B_d, d, delta_ff), [t t+dt], x(:,end));
     x = [x xsol(end,:)'];     % Update the state
     
     % Step response
@@ -91,7 +97,8 @@ while t <= t_end*2
     y_posg = y_des_t + x(1,end)*cos(heading_t); % Y global position
     slip_t = (1/v_x)*x(2, end) - x(3, end);     % Slip angle
     course_t = heading_t + slip_t;              % Course angle
-    u = steering_angle_u(t, freq);              % Steering angle
+    % u = steering_angle_u(t, freq);              % Steering angle
+    u = (-K*x(:,end)) + delta_ff;
 
     pos_des = [pos_des [x_des_t y_des_t]'];
     pos_global = [pos_global [x_posg y_posg heading_t]'];
@@ -107,7 +114,12 @@ while t <= t_end*2
     % Change the path after 10s of the simulation
     if t >= 10.0
         R = 1000;   % Along a circle
-    end 
+    end
+
+    % Da plottare
+    e2 = (-(l_r / R)) + ((l_f / (2 * C_r * (l_f + l_r))) * ((mass*v_x^2) / R));
+    heading_err = [heading_err e2'];
+    heading_err_2 = [heading_err_2 x(3, end)'];
 end
 
 %  Plot
