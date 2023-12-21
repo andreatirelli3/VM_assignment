@@ -71,9 +71,6 @@ acceleration = 0;           % Acceleration
 commanded_accel = 0;        % Commanded accel
 y_step_response = 0;        % Step response
 
-heading_err = 0;
-heading_err_2 = 0;
-
 % Simulation
 while t <= t_end*2
     % Road Aligned integrator to calc d, psi_des(t), x_des(t) and y_des(t)
@@ -109,11 +106,9 @@ while t <= t_end*2
     if t >= 10.0
         R = 1000;   % Along a circle
     end
-
-    % Da plottare
-    e2 = (-(l_r / R)) + ((l_f / (2 * C_r * (l_f + l_r))) * ((mass*v_x^2) / R));
-    heading_err = [heading_err e2'];
-    heading_err_2 = [heading_err_2 x(3, end)'];
+    e2 = -(l_r / R) + (l_f / (2 * C_r *))
+    disp("e2:");
+    disp(x(3, end));
 end
 
 %  Plot
@@ -125,15 +120,3 @@ title('Step response');
 xlabel('Time (s)');
 ylabel('Step response (y(t))');
 grid on;
-
-figure
-plot(t_plot, heading_err, 'g-', 'LineWidth', 1.5);
-title('Heading error');
-xlabel('Time (s)');
-ylabel('Heading');
-grid on;
-hold on;
-
-plot(t_plot, heading_err_2, 'r-', 'LineWidth', 1.5);
-
-legend('exp err', 'state err');
