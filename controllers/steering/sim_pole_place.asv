@@ -33,10 +33,11 @@ xdot = @xdot;
 R = inf;        % Path radius, start with inf and at t = 10 change to R = 1000
 e_start = -2;   % Simulation starting error, 2m
 
-% TODO: Intervallo di velocità
+% Velocity intervall
+v_interval = [30 120];
 
 % Road Allignment system matrices A, B, B_d
-[A, B, B_d] = road_aligned_matrices(mass, i_z, l_f, l_r, C_f, C_r, v_x);
+[A, B, B_d] = road_aligned_matrices(mass, i_z, l_f, l_r, C_f, C_r, v_interval(1));
 
 n = size(A,2);      % number of states
 % p = size(B_d,1);    % number of measured outputs  ???
@@ -51,10 +52,12 @@ if r ~= n
 end
 
 % Steering constraints
-[Ts, overshoot_max] = steering_constraints();
+%[Ts, overshoot_max] = steering_constraints();
 
 % Design steering controller K
-[K, delta, S, w_n] = design_k(Ts, overshoot_max, A, B);
+%[K, delta, S, w_n] = design_k(Ts, overshoot_max, A, B);
+
+%disp(K);
 
 % Initial state of the simulation
 x = [-2; 0; 0; 0];
@@ -99,7 +102,7 @@ while t <= t_end*2
     slip_t = (1/v_x)*x(2, end) - x(3, end);     % Slip angle
     course_t = heading_t + slip_t;              % Course angle
     % u = steering_angle_u(t, freq);              % Steering angle
-    u = (-K*x(:,end)) + delta_ff;
+    u = (-K_trained{index}*x(:,end)) + delta_ff;
 
     pos_des = [pos_des [x_des_t y_des_t]'];
     pos_global = [pos_global [x_posg y_posg heading_t]'];
@@ -121,6 +124,8 @@ while t <= t_end*2
     e2 = (-(l_r / R)) + ((l_f / (2 * C_r * (l_f + l_r))) * ((mass*v_x^2) / R));
     heading_err = [heading_err e2'];
     heading_err_2 = [heading_err_2 x(3, end)'];
+
+    v_x = v_x *3.6;
 end
 
 %  Plot
