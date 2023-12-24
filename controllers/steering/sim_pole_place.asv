@@ -114,7 +114,7 @@ while t <= t_end*2
         v_acc = v_acc + long_pos(end) / t;
     end
     
-    % Choose the correct K controlled based on the actual speed
+    % K update
     if (v_acc * 3.6) >= 30 && (v_acc * 3.6) < 40
         index = 1;
     elseif (v_acc * 3.6) >= 40 && (v_acc * 3.6) < 50
@@ -139,8 +139,7 @@ while t <= t_end*2
 
     K = K_trained{index};
 
-    % Road Allignment system matrices A, B, B_d
-    [A, B, B_d] = road_aligned_matrices(mass, i_z, l_f, l_r, C_f, C_r, v_acc);
+    
 
     % Road Aligned integrator to calc d, psi_des(t), x_des(t) and y_des(t)
     [d, psi_des_t, x_des_t, y_des_t] = road_aligned_integrator(v_acc, R, t);
