@@ -1,6 +1,6 @@
 clear all, close all, clc
 
-% Load external paths
+%% Envirorment imports
 % project root directory
 root_folder = fileparts(fileparts(pwd));
 % controllers root directory
@@ -22,6 +22,7 @@ addpath(road_aligned_folder);       % road aligned directory
 addpath(controllers_src_folder)     % controllers source directory
 addpath(lqr_folder);                % LQR directory
 
+%% Simulation model definitions
 % Vehicle geomtry
 [mass, i_z, l_f, l_r, C_f, C_r] = vehicle_geometry();
 
@@ -29,13 +30,14 @@ addpath(lqr_folder);                % LQR directory
 [v_x, freq, amp_steering, t, t_end, dt] = gen_simulation();
 R = inf;        % Path radius, start with inf and at t = 10 change to R = 1000
 e_start = -2;   % Simulation starting error, 2m
+v_des = 80;     % Velocity desire to achive.
+% Normalize in m/s
+v_des = v_des * 1000 / 3600;
 
 % Road Allignment system matrices A, B, B_d
 [A, B, B_d] = road_aligned_matrices(mass, i_z, l_f, l_r, C_f, C_r, v_x);
 
 n = size(A,2);      % number of states
-p = size(B_d,1);    % number of measured outputs  ???
-m = size(B,2);      % number of inputs
 
 % Rank of the reachability matrix
 r = rank(ctrb(A,B));
@@ -48,65 +50,104 @@ end
 % Steering constraints
 [Ts, overshoot_max] = steering_constraints();
 
-% LQR
-[Q, K, S, CLP] = lq_regolator(A, B);
-
-% disp("LQ regulator Gain");
-% disp(K)
-
-% disp("LQ regolator Poles");
-% disp(CLP);
+% General controller constraints
+[delta, S, w_n] = controller_constraints(Ts, overshoot_max);
 
 % Initial state of the simulation
 x = [-2; 0; 0; 0];
 
-% Plot storage
+% Default plot storage
 t_plot = 0:dt:t_end*2;      % Simulation time
 pos_des = [0; 0];           % Desire position
 pos_global = [0; -2; 0];    % Global position
 heading = 0;                % Vehicle heading
+heading_err = 0;            % Vehicle heading error
 slip_angle = 0;             % Slip angle
 course_angle = 0;           % Course angle
 steering_angle = 0;         % Steering angle
-longitudinal_v = 70;        % Longitudinal velocity
-acceleration = 0;           % Acceleration
-commanded_accel = 0;        % Commanded accel
-y_step_response = 0;        % Step response
 
-heading_err = 0;
-heading_err_2 = 0;
+% Additional plot storage for specific request
+y_step_response = 0;        % Step response
+long_v = v_x;               % Longitudinal speed
+accel = 0;                  % Acceleration
+
+% Support struct
+reference = []; % Longitudinal reference
+desired = [];   % Desire longitudinal position
+long_pos = [];  % Longitudinal position
+
+%% Simulation preparation
+% Design steering controller K
+[Q, K, S, CLP] = lq_regolator(A, B);    % LQR
+
+% Find correct parameters k_p and k_i for the PIs
+tau = .5;
+ratio = .25;
+[sys, k_p, k_i] = find_pic_values(tau, ratio);
 
 % Simulation
 while t <= t_end*2
+    % Longitudinal reference, velocity dependent
+    x_rf = PI_integrator(t, v_x, v_des);
+    reference = [reference x_rf];
+
+    % PI
+    [tsol, xpi] = ode45(@(t, reference) PI(t, v_x, v_des, k_p, k_i), [t t+dt], reference(:,end));
+    desired = [desired xpi(end,:)];
+
+    % PIC
+    [tsol, xpic] = ode45(@(t_pic, desired) PI_controller(t, tau, desired), [t t+dt], desired(:,end));
+    long_pos = [long_pos -xpic(end,:)];
+    
+    v_acc = v_x;
+
+    if t ~= 0
+        v_acc = v_acc + long_pos(end) / t;
+    end
+
     % Road Aligned integrator to calc d, psi_des(t), x_des(t) and y_des(t)
     [d, psi_des_t, x_des_t, y_des_t] = road_aligned_integrator(v_x, R, t);
 
     % Feed-forward
-    delta_ff = feedforward(mass, v_x, l_f, l_r, C_f, C_r, R, K);
+    delta_ff = feedforward(mass, v_acc, l_f, l_r, C_f, C_r, R, K);
 
     % ODE Lateral movement with controller K
     [tsol, xsol] = ode45(@(t, x) xdot(x, A, B, K, B_d, d, delta_ff), [t t+dt], x(:,end));
     x = [x xsol(end,:)'];     % Update the state
     
     % Step response
-    %y = step_response(t, w_n, delta);
+    y = step_response(t, w_n, delta);
     
     % Update storages
     heading_t = x(3, end) + psi_des_t;          % PSI
     x_posg = x_des_t - x(1,end)*sin(heading_t); % X global position
     y_posg = y_des_t + x(1,end)*cos(heading_t); % Y global position
-    slip_t = (1/v_x)*x(2, end) - x(3, end);     % Slip angle
+    slip_t = (1/v_acc)*x(2, end) - x(3, end);   % Slip angle
     course_t = heading_t + slip_t;              % Course angle
-    % u = steering_angle_u(t, freq);              % Steering angle
-    u = (-K*x(:,end)) + delta_ff;
-
+    u = (-K*x(:,end)) + delta_ff;               % Steering angle
+    % Expeted heading error
+    e2 = (-(l_r / R)) + ((l_f / (2 * C_r * (l_f + l_r))) * ((mass*v_acc^2) / R));
+    
+    % Desire position plot
     pos_des = [pos_des [x_des_t y_des_t]'];
+    % Global position plot
     pos_global = [pos_global [x_posg y_posg heading_t]'];
-    % heading = [heading heading_t'];
+    % State heading err plot
+    heading = [heading x(3, end)'];
+    % Expected heading error plot
+    heading_err = [heading_err e2'];
+    % Slip angle plot
     slip_angle = [slip_angle slip_t'];
+    % Course angle plot
     course_angle = [course_angle course_t'];
+    % Steering angle plot
     steering_angle = [steering_angle u'];
-    % y_step_response = [y_step_response y'];
+    % Step response plot
+    y_step_response = [y_step_response y'];
+    % Longitudinal speed plot
+    long_v = [long_v v_acc'];
+    % Acceleration plot
+    accel = [accel (long_pos(end) / t)'];
 
     % Move to the next instant (t)
     t = t + dt;
@@ -115,12 +156,8 @@ while t <= t_end*2
     if t >= 10.0
         R = 1000;   % Along a circle
     end
-
-    % Da plottare
-    e2 = (-(l_r / R)) + ((l_f / (2 * C_r * (l_f + l_r))) * ((mass*v_x^2) / R));
-    heading_err = [heading_err e2'];
-    heading_err_2 = [heading_err_2 x(3, end)'];
 end
 
-%  Plot
+%%  Plotters
 plotter(t_plot, x, pos_global, heading, slip_angle, course_angle, steering_angle, pos_des);
+plotter2(t_plot, heading, heading_err, y_step_response, long_v, accel);
