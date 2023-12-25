@@ -51,8 +51,6 @@ for v_x = v_interval(1) + 10:d_vx:v_interval(2) - 1
 
     % Add the new controller K_t to K
     K{end+1} = K_t;
-
-    v_x = v_x * 3.6;
 end
 
 

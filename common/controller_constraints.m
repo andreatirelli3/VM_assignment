@@ -1,5 +1,5 @@
 function [delta, S, w_n] = controller_constraints(Ts, overshoot_max)
-    delta = .6;
+    delta = .7;
     S = 100 * exp ((-pi*delta)/sqrt(1-delta^2));
     
     % Check the respect of the overshoot constraint

@@ -33,11 +33,15 @@ addpath(velocity_controlleres_folder);  % velocity controllers directory
 [v_x, freq, amp_steering, t, t_end, dt] = gen_simulation();
 R = inf;        % Path radius, start with inf and at t = 10 change to R = 1000
 e_start = -2;   % Simulation starting error, 2m
-% v_des = 80;     % Velocity desire to achive.
+
+% DO NOT CHANGE - Velocity generalized speed interval
+v_static_interval = [30 120];
+
+% Velocity simulation
 v_interval = [30 120];
-v_x = v_interval(1) * 1000 / 3600;
-v_des = v_interval(2);
+v_des = v_interval(2);                                                  
 % Normalize in m/s
+v_x = v_interval(1) * 1000 / 3600;
 v_des = v_des * 1000 / 3600;
 
 % Road Allignment system matrices A, B, B_d
@@ -87,12 +91,14 @@ long_pos = [];  % Longitudinal position
 % K = design_k(A, B, delta, w_n);     % Pole Placement
 
 % Powertraing the controller
-K_trained = power_train(v_interval, true);
+K_trained = power_train(v_static_interval, true);
 
 % Find correct parameters k_p and k_i for the PIs
 tau = .5;
 ratio = .25;
-[sys, k_p, k_i] = find_pic_values(tau, ratio);
+[sys, k_p, k_i, k_pinterval] = find_pic_values(tau, ratio);
+
+e_acc = 1;  % acceleration error attenuation
 
 %% Simulation
 while t <= t_end*2
@@ -113,25 +119,26 @@ while t <= t_end*2
     if t ~= 0
         v_acc = v_acc + long_pos(end) / t;
     end
-    
+
+    disp(["actual km/h: " num2str(v_acc * 3.6)]);
     % Choose the correct K controlled based on the actual speed
-    if (v_acc * 3.6) >= 30 && (v_acc * 3.6) < 40
+    if (v_acc * 3.6) >= 30 && (v_acc * 3.6) < 40 - e_acc
         index = 1;
-    elseif (v_acc * 3.6) >= 40 && (v_acc * 3.6) < 50
+    elseif (v_acc * 3.6) >= 40 && (v_acc * 3.6) < 50 - e_acc
         index = 2;
-    elseif (v_acc * 3.6) >= 50 && (v_acc * 3.6) < 60
+    elseif (v_acc * 3.6) >= 50 && (v_acc * 3.6) < 60 - e_acc
         index = 3;
-    elseif (v_acc * 3.6) >= 60 && (v_acc * 3.6) < 70
+    elseif (v_acc * 3.6) >= 60 && (v_acc * 3.6) < 70 - e_acc
         index = 4;
-    elseif (v_acc * 3.6) >= 70 && (v_acc * 3.6) < 80
+    elseif (v_acc * 3.6) >= 70 && (v_acc * 3.6) < 80 - e_acc
         index = 5;
-    elseif (v_acc * 3.6) >= 80 && (v_acc * 3.6) < 90
+    elseif (v_acc * 3.6) >= 80 && (v_acc * 3.6) < 90 - e_acc
         index = 6;
-    elseif (v_acc * 3.6) >= 90 && (v_acc * 3.6) < 100
+    elseif (v_acc * 3.6) >= 90 && (v_acc * 3.6) < 100 - e_acc
         index = 7;
-    elseif (v_acc * 3.6) >= 100 && (v_acc * 3.6) < 110
+    elseif (v_acc * 3.6) >= 100 && (v_acc * 3.6) < 110 - e_acc
         index = 8;
-    elseif (v_acc * 3.6) >= 110 && (v_acc * 3.6) < 120
+    elseif (v_acc * 3.6) >= 110 && (v_acc * 3.6) < 120 - e_acc
         index = 9;
     else
         index = 10;
@@ -198,3 +205,6 @@ end
 %%  Plotters
 plotter(t_plot, x, pos_global, heading, slip_angle, course_angle, steering_angle, pos_des);
 plotter2(t_plot, heading, heading_err, y_step_response, long_v, accel);
+
+figure;
+rlocus(sys, k_pinterval);
