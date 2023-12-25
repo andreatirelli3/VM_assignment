@@ -4,7 +4,7 @@ clear all, close all, clc
 % project root directory
 root_folder = fileparts(fileparts(pwd));
 % controllers root directory
-controller_folder = fileparts(pwd);
+controllers_folder = fileparts(pwd);
 % common directory
 common_sym_path = [root_folder, '/common'];
 % models directory
@@ -15,12 +15,15 @@ road_aligned_folder = [models_folder, '/road_aligned'];
 controllers_src_folder = [pwd, '/src'];
 % LQR directory
 lqr_folder = [pwd, '/src/lqr'];
+% velocity controllers directory
+velocity_controlleres_folder = [controllers_folder, '/velocity/src'];
 
 % Add the new path to the MATLAB search path
 addpath(common_sym_path);           % common directory
 addpath(road_aligned_folder);       % road aligned directory
 addpath(controllers_src_folder)     % controllers source directory
 addpath(lqr_folder);                % LQR directory
+addpath(velocity_controlleres_folder);  % velocity controllers directory
 
 %% Simulation model definitions
 % Vehicle geomtry
@@ -117,7 +120,6 @@ while t <= t_end*2
         v_acc = v_acc + long_pos(end) / t;
     end
     
-    disp(["actual km/h: " num2str(v_acc * 3.6)]);
     % Choose the correct K controlled based on the actual speed
     if (v_acc * 3.6) >= 30 && (v_acc * 3.6) < 40 - e_acc
         index = 1;
@@ -141,10 +143,12 @@ while t <= t_end*2
         index = 10;
     end
 
+    disp(["actual km/h: " num2str(v_acc * 3.6) " - using K at index: " num2str(index)]);
+    
     K = K_trained{index};
 
     % Road Aligned integrator to calc d, psi_des(t), x_des(t) and y_des(t)
-    [d, psi_des_t, x_des_t, y_des_t] = road_aligned_integrator(v_x, R, t);
+    [d, psi_des_t, x_des_t, y_des_t] = road_aligned_integrator(v_acc, R, t);
 
     % Feed-forward
     delta_ff = feedforward(mass, v_acc, l_f, l_r, C_f, C_r, R, K);
